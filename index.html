@@ -2,14 +2,23 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Проекты Ромы</title>
+<meta name="format-detection" content="telephone=no, date=no, address=no">
+<meta name="theme-color" content="#f1f3f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1311" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Доска проектов">
+<meta property="og:description" content="Что сделано, что в работе, что в планах">
+<title>Доска проектов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Sofia+Sans+Condensed:wght@700;800&display=swap">
 <style>
-/* Страница для Ромы. Собирает её sync.py из задачи.json: вместо {{…}} встают дата, переходы и список.
+/* Страница для Ромы. Собирает её sync.py из задачи.json: вместо {{…}} встают дата, отбор, разделы и список.
    Оформление — то же, что у доски V (доска.html): два шрифта, один акцентный цвет.
-   Раскладка: одна колонка-ведомость; в каждом разделе слева проект, справа его строки. */
+   Рома смотрит с телефона: на экране один раздел, панель разделов прижата к низу, под большой палец.
+   Без скрипта страница остаётся длинным списком, а панель работает как переходы. */
 :root {
   --bg: #f1f3f0;
   --surface: #fbfcfb;
@@ -31,7 +40,7 @@
   --t-section: 1.5rem;
   --t-display: clamp(2.25rem, 1.5rem + 3.2vw, 3.5rem);
 
-  --gap: clamp(2rem, 1.25rem + 2.5vw, 3rem);
+  --gap: clamp(1.25rem, 0.75rem + 2vw, 2.5rem);
   --gutter: clamp(1rem, 4vw, 2rem);
 }
 @media (prefers-color-scheme: dark) {
@@ -50,6 +59,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-padding-top: 1rem; }
 body {
   margin: 0;
@@ -60,20 +70,20 @@ body {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
 }
+button { font: inherit; color: inherit; }
 ::selection { background: var(--accent-soft); color: var(--ink); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .page {
   max-width: 60rem;
   margin-inline: auto;
-  padding-inline: var(--gutter);
-  padding-block: clamp(1.25rem, 3vw, 2.5rem) 4rem;
+  padding: clamp(1.25rem, 3vw, 2.5rem) max(var(--gutter), env(safe-area-inset-right)) 4rem max(var(--gutter), env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
   gap: var(--gap);
 }
 
-.top { display: grid; gap: 0.625rem; }
+.top { display: grid; gap: 0.5rem; }
 .top h1 {
   margin: 0;
   font-family: var(--f-display);
@@ -94,22 +104,64 @@ body {
 }
 .stamp { margin: 0; font-size: var(--t-ui); color: var(--ink-3); }
 
-/* переходы к разделам */
-.chips { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.5rem; }
+/* отбор по проекту */
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.3rem 0.7rem;
-  font-size: var(--t-ui);
-  line-height: 1.35;
+  appearance: none;
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  font-family: var(--f-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
   color: var(--ink-2);
-  text-decoration: none;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  background: transparent;
+  border: 1.5px solid var(--line);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .chip:hover { border-color: var(--ink-3); color: var(--ink); }
-.chip .n { font-size: var(--t-label); font-variant-numeric: tabular-nums; color: var(--ink-3); }
+.chip:active { background: var(--line-2); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+/* панель разделов */
+.tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  max-width: 36rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+.tab {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.125rem;
+  min-height: 3.5rem;
+  padding: 0.375rem 0.125rem 0.5rem;
+  color: var(--ink-3);
+  text-decoration: none;
+  border-top: 2px solid transparent;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.tab .n { font-size: 1.125rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.tab .l { font-size: var(--t-label); line-height: 1.2; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab:active { background: var(--line-2); }
+.tab[aria-current="true"] { color: var(--ink); border-top-color: var(--ink); }
+.tab[aria-current="true"] .l { font-weight: 600; }
+.tab[aria-current="true"] .n { color: var(--ink); }
+/* единственное место, где работает акцент: то, что ждёт Рому */
+.tab[data-s="ask"] .n { color: var(--accent); }
+.tab.is-zero .n { color: var(--ink-3); font-weight: 400; }
 
 .list { display: grid; gap: var(--gap); }
 .group { display: grid; min-width: 0; }
@@ -132,7 +184,6 @@ body {
   text-wrap: balance;
 }
 .group-h .cnt { font-size: var(--t-ui); font-variant-numeric: tabular-nums; color: var(--ink-3); }
-/* единственное место, где работает акцент: то, что ждёт Рому */
 .g-ask .group-h { border-color: var(--accent); }
 .g-ask .group-h h2 { color: var(--accent); }
 
@@ -140,11 +191,11 @@ body {
   display: grid;
   grid-template-columns: 13rem minmax(0, 1fr);
   gap: 0 1.5rem;
-  padding-block: 0.875rem;
+  padding: 0.5rem 0;
   border-bottom: 1px solid var(--line);
 }
 .proj:last-child { border-bottom: 0; }
-.proj-h { margin: 0; display: grid; gap: 0.3rem; align-content: start; justify-items: start; }
+.proj-h { margin: 0; padding-top: 0.625rem; display: grid; gap: 0.3rem; align-content: start; justify-items: start; }
 .proj-name { font-size: var(--t-ui); line-height: 1.35; color: var(--ink-3); text-wrap: pretty; }
 /* метка проекта — как табличка на съезде с шоссе */
 .tag {
@@ -161,59 +212,136 @@ body {
   border: 1.5px solid var(--ink);
   border-radius: 3px;
 }
-.rows { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.75rem; }
-.rows li { max-width: 68ch; text-wrap: pretty; overflow-wrap: anywhere; }
+.rows { margin: 0; padding: 0; list-style: none; }
+.rows li { max-width: 68ch; padding: 0.625rem 0; text-wrap: pretty; overflow-wrap: anywhere; }
+.rows li + li { border-top: 1px solid var(--line-2); }
+.rows b { font-weight: 600; }
 .when { font-size: var(--t-ui); color: var(--ink-3); white-space: nowrap; }
-.g-done .rows li { color: var(--ink-2); }
+.empty { margin: 0; color: var(--ink-2); }
 
 @media (max-width: 44rem) {
-  .proj { grid-template-columns: minmax(0, 1fr); gap: 0.625rem; }
-  .proj-h { grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 0.625rem; }
+  .lede { display: none; }
+  /* отбор — лента в одну строку с прокруткой вбок: задачи видны с первого экрана */
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter) calc(var(--gutter) + 1.5rem);
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; }
+  .page { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+  .tabs {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 2;
+    max-width: none;
+    padding: 0 max(0.25rem, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(0.25rem, env(safe-area-inset-left));
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .tab { min-height: 3.75rem; }
+  .proj { grid-template-columns: minmax(0, 1fr); padding-top: 1rem; }
+  .proj-h { padding-top: 0; grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 0.625rem; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  html { scroll-behavior: smooth; }
-  .chip { transition: border-color 0.12s ease, color 0.12s ease; }
+  .chip, .tab { transition: border-color 0.12s ease, background-color 0.12s ease, color 0.12s ease; }
 }
 </style>
 </head>
 <body>
 <div class="page">
   <header class="top">
-    <h1>Проекты Ромы</h1>
+    <h1>Доска проектов</h1>
     <p class="lede">Что сделано, что в работе и что в планах — по всем проектам сразу.</p>
-    <p class="stamp">Обновлено 9 октября 2026</p>
-    <nav class="chips" aria-label="Разделы"><a class="chip" href="#ask">Нужен твой ответ <span class="n">17</span></a><a class="chip" href="#work">В работе <span class="n">26</span></a><a class="chip" href="#ext">Ждём ответа <span class="n">4</span></a><a class="chip" href="#plan">В планах <span class="n">18</span></a><a class="chip" href="#done">Сделано <span class="n">11</span></a></nav>
+    <p class="stamp">Обновлено 9 октября 2026</p>
   </header>
+  <div class="chips" id="filter" role="group" aria-label="Проект" hidden><button class="chip" type="button" data-p="" aria-pressed="true">Все</button><button class="chip" type="button" data-p="land" aria-pressed="false">#1 14th Ave</button><button class="chip" type="button" data-p="exit168" aria-pressed="false">#2 Exit 168</button><button class="chip" type="button" data-p="rv" aria-pressed="false">#3 Elijah RVs</button><button class="chip" type="button" data-p="book" aria-pressed="false">#4 Книга</button><button class="chip" type="button" data-p="burner" aria-pressed="false">#5 Я Бернер</button><button class="chip" type="button" data-p="common" aria-pressed="false">Общее</button></div>
+  <nav class="tabs" aria-label="Разделы"><a class="tab" href="#ask" data-s="ask"><span class="n">17</span><span class="l">От тебя</span></a><a class="tab" href="#work" data-s="work"><span class="n">26</span><span class="l">В работе</span></a><a class="tab" href="#ext" data-s="ext"><span class="n">4</span><span class="l">Ждём</span></a><a class="tab" href="#plan" data-s="plan"><span class="n">18</span><span class="l">Планы</span></a><a class="tab" href="#done" data-s="done"><span class="n">11</span><span class="l">Сделано</span></a></nav>
   <main class="list">
 <section class="group g-ask" id="ask"><div class="group-h"><h2>Нужен твой ответ</h2><span class="cnt">17</span></div>
-<div class="proj"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li>Домики и купель: отчёт у тебя с 5 октября — где купить, цены, сроки. Продавцам не пишем до твоего решения.</li><li>Зимний рилс: нужны зимние фото или видео участка.</li><li>План всей территории: английские карты и набросок застройки у тебя на почте — ждём правок.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li>SFC: после созвона 22 сентября обещали прислать предложение по платной оценке участка. Следующий шаг — за тобой.</li><li>GSEC: участок можно внести в их базу площадок, бесплатно и без комиссии. Для этого нужен твой профиль у них: акры, дороги, коммуникации, фото.</li><li>LinkedIn Premium: брать или нет. Бесплатный аккаунт даёт три записки в месяц, Premium снимает лимит, он платный.</li><li>Регистрация на SAM.gov и Cal eProcure: нужна, чтобы предлагать участок госзаказчикам, оформляется на владельца.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#3 Elijah RVs</span><span class="proj-name">Аренда домов на колёсах</span></p><ul class="rows"><li>Доступы: у кого Google-профиль компании, Facebook, система брони и хостинг. Без них не начать ни карточку в Google, ни площадки аренды.</li><li>Вопросы по парку: сколько машин и какие в строю, принимается ли оплата картой, где оригиналы фото и видео.</li><li>Outdoorsy, RVshare и другие площадки аренды: сейчас компании нет ни на одной. Начнём, когда будут доступы и ответы по парку.</li><li>Карточки компании на картах: живы только Google Карты; в системе брони и нескольких каталогах стоит старый адрес. Исправим, когда будут доступы.</li><li>План рекламы — как сдавать RV чаще: исследование и аудит готовы, план составим после ответов по парку и доступов.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">Общее</span><span class="proj-name">Новые направления и общие дела</span></p><ul class="rows"><li>Группы в Facebook по городам: какие города берём. Две группы про баню уже есть — русская и английская.</li><li>Facebook Marketplace: апелляцию отклонили, кнопки новой проверки нет. Остаётся платная подписка Meta Verified на твоём аккаунте, без гарантий.</li><li>Курсы по ИИ: для кого курс.</li><li>База клиентов: для офисов, для RV или для всего вместе.</li><li>«Рентал-сайт» из твоего списка от 3 сентября: это отдельный сайт или один из сайтов Exit 168 и Elijah RVs.</li></ul></div>
+<div class="proj" data-p="land"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li><b>SFC</b>: после созвона 22 сентября обещали прислать предложение по платной оценке участка. Следующий шаг — за тобой.</li><li><b>GSEC</b>: участок можно внести в их базу площадок, бесплатно и без комиссии. Для этого нужен твой профиль у них: акры, дороги, коммуникации, фото.</li><li><b>LinkedIn Premium</b>: брать или нет. Бесплатный аккаунт даёт три записки в месяц, Premium снимает лимит, он платный.</li><li><b>Регистрация на SAM.gov и Cal eProcure</b>: нужна, чтобы предлагать участок госзаказчикам, оформляется на владельца.</li></ul></div>
+<div class="proj" data-p="exit168"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li><b>Домики и купель</b>: отчёт у тебя с 5 октября — где купить, цены, сроки. Продавцам не пишем до твоего решения.</li><li><b>Зимний рилс</b>: нужны зимние фото или видео участка.</li><li><b>План всей территории</b>: английские карты и набросок застройки у тебя на почте — ждём правок.</li></ul></div>
+<div class="proj" data-p="rv"><p class="proj-h"><span class="tag">#3 Elijah RVs</span><span class="proj-name">Аренда домов на колёсах</span></p><ul class="rows"><li><b>Доступы</b>: у кого Google-профиль компании, Facebook, система брони и хостинг. Без них не начать ни карточку в Google, ни площадки аренды.</li><li><b>Вопросы по парку</b>: сколько машин и какие в строю, принимается ли оплата картой, где оригиналы фото и видео.</li><li><b>Outdoorsy, RVshare и другие площадки аренды</b>: сейчас компании нет ни на одной. Начнём, когда будут доступы и ответы по парку.</li><li><b>Карточки компании на картах</b>: живы только Google Карты; в системе брони и нескольких каталогах стоит старый адрес. Исправим, когда будут доступы.</li><li><b>План рекламы — как сдавать RV чаще</b>: исследование и аудит готовы, план составим после ответов по парку и доступов.</li></ul></div>
+<div class="proj" data-p="common"><p class="proj-h"><span class="tag">Общее</span><span class="proj-name">Новые направления и общие дела</span></p><ul class="rows"><li><b>Группы в Facebook по городам</b>: какие города берём. Две группы про баню уже есть — русская и английская.</li><li><b>Facebook Marketplace</b>: апелляцию отклонили, кнопки новой проверки нет. Остаётся платная подписка Meta Verified на твоём аккаунте, без гарантий.</li><li><b>Курсы по ИИ</b>: для кого курс.</li><li><b>База клиентов</b>: для офисов, для RV или для всего вместе.</li><li><b>«Рентал-сайт» из твоего списка от 3 сентября</b>: это отдельный сайт или один из сайтов Exit 168 и Elijah RVs.</li></ul></div>
 </section>
 <section class="group g-work" id="work"><div class="group-h"><h2>В работе</h2><span class="cnt">26</span></div>
-<div class="proj"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li>Цены для групп от 11 до 30 человек ($750 и $1500): уточняем, на сайт пока не вносим.</li><li>Google-карточка: Google не принял подтверждение от 6 октября и просит пройти его заново. На картах пока прежнее название «Hampshire Cabin».</li><li>Статистика сайта: сравниваем с цифрами на 5 октября, после этого решаем про первый экран на компьютере.</li><li>Посты в группах бани: готовим новые, публикуем только сильные.</li><li>Гранты на чистку леса: Placer RCD ответил — приедет посмотреть участок, выезд возможен в первые недели ноября. По программе CAL FIRE написали леснику округа, ответа пока нет.</li><li>Адрес сайта в конце постов: проба на две недели с 26 сентября, подводим итог — идут ли по нему люди.</li><li>Русская версия у каждого рилса: три английских рилса пока без русских, подбираем русский голос.</li><li>Земля под чужие проекты («этно-парк»): идея записана — 1–5 акров, плата долей дохода. Начнём после разговора с тобой.</li><li>Пост в группе «Иммигранты Сакраменто»: бесплатно там публикуют только 1-го числа, ближайший день — 1 ноября.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li>LinkedIn: предлагаем связь всем, кому писали. Сейчас собираем список людей; Caltrans, Placer RCD и CAL FIRE — первыми.</li><li>LinkedIn: проверяем, ушли ли записки людям из Tesla и QTS.</li><li>Солнечные компании: напоминания тем, кто не ответил, — около 12 октября.</li><li>Повторные письма первой волне: 12 ушли 29 сентября, осталось 13. Ответили двое: Panattoni отказал, Green Acres дал верный адрес.</li><li>Green Acres: пересылаем письмо на адрес, который они дали.</li><li>Письмо в SMUD о запасе мощности на участке: эту цифру спрашивают дата-центры.</li><li>Sacramento United: напоминаем о себе. 18 сентября президент клуба написал, что заинтересован, с тех пор не отвечал.</li><li>Госорганы и оборонные подрядчики: отчёт готов, решаем, писать ли им.</li><li>Link Logistics: заявка через сайт ушла 12 сентября, ответа нет. Следующий шаг — звонок в их офис в Сакраменто.</li><li>LinkedIn: презентация участка в «Избранное» твоего профиля — осталось прикрепить файл.</li><li>LinkedIn: проверяем, вышли ли шесть отложенных постов — по одному в неделю с 17 сентября.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#4 Книга</span><span class="proj-name">«Изгнанные из Рая»</span></p><ul class="rows"><li>Книга: первая часть написана, пишем вторую.</li><li>Книга: три ролика повторяют друг друга — выбираем, какой брать.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#5 Я Бернер</span><span class="proj-name">Burning Man под ключ</span></p><ul class="rows"><li>Проверяем, свободно ли имя yaberner в Instagram и Facebook. На YouTube и во ВКонтакте оно свободно.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">Общее</span><span class="proj-name">Новые направления и общие дела</span></p><ul class="rows"><li>YouTube-канал про бизнес в Америке: готовим варианты и предложения — как и что снимать.</li><li>Созвон втроём про маркетплейсы: Вадим согласует время и предупредит тебя за день.</li><li>ИИ-агент в наших чатах: первый тест пройден, идёт подготовка; Telegram ещё не подключён.</li></ul></div>
+<div class="proj" data-p="land"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li><b>LinkedIn</b>: предлагаем связь всем, кому писали. Сейчас собираем список людей; Caltrans, Placer RCD и CAL FIRE — первыми.</li><li><b>LinkedIn</b>: проверяем, ушли ли записки людям из Tesla и QTS.</li><li><b>Солнечные компании</b>: напоминания тем, кто не ответил, — около 12 октября.</li><li><b>Повторные письма первой волне</b>: 12 ушли 29 сентября, осталось 13. Ответили двое: Panattoni отказал, Green Acres дал верный адрес.</li><li><b>Green Acres</b>: пересылаем письмо на адрес, который они дали.</li><li><b>Письмо в SMUD о запасе мощности на участке</b>: эту цифру спрашивают дата-центры.</li><li><b>Sacramento United</b>: напоминаем о себе. 18 сентября президент клуба написал, что заинтересован, с тех пор не отвечал.</li><li><b>Госорганы и оборонные подрядчики</b>: отчёт готов, решаем, писать ли им.</li><li><b>Link Logistics</b>: заявка через сайт ушла 12 сентября, ответа нет. Следующий шаг — звонок в их офис в Сакраменто.</li><li><b>LinkedIn</b>: презентация участка в «Избранное» твоего профиля — осталось прикрепить файл.</li><li><b>LinkedIn</b>: проверяем, вышли ли шесть отложенных постов — по одному в неделю с 17 сентября.</li></ul></div>
+<div class="proj" data-p="exit168"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li><b>Цены для групп от 11 до 30 человек ($750 и $1500)</b>: уточняем, на сайт пока не вносим.</li><li><b>Google-карточка</b>: Google не принял подтверждение от 6 октября и просит пройти его заново. На картах пока прежнее название «Hampshire Cabin».</li><li><b>Статистика сайта</b>: сравниваем с цифрами на 5 октября, после этого решаем про первый экран на компьютере.</li><li><b>Посты в группах бани</b>: готовим новые, публикуем только сильные.</li><li><b>Гранты на чистку леса</b>: Placer RCD ответил — приедет посмотреть участок, выезд возможен в первые недели ноября. По программе CAL FIRE написали леснику округа, ответа пока нет.</li><li><b>Адрес сайта в конце постов</b>: проба на две недели с 26 сентября, подводим итог — идут ли по нему люди.</li><li><b>Русская версия у каждого рилса</b>: три английских рилса пока без русских, подбираем русский голос.</li><li><b>Земля под чужие проекты («этно-парк»)</b>: идея записана — 1–5 акров, плата долей дохода. Начнём после разговора с тобой.</li><li><b>Пост в группе «Иммигранты Сакраменто»</b>: бесплатно там публикуют только 1-го числа, ближайший день — 1 ноября.</li></ul></div>
+<div class="proj" data-p="book"><p class="proj-h"><span class="tag">#4 Книга</span><span class="proj-name">«Изгнанные из Рая»</span></p><ul class="rows"><li><b>Книга</b>: первая часть написана, пишем вторую.</li><li><b>Книга</b>: три ролика повторяют друг друга — выбираем, какой брать.</li></ul></div>
+<div class="proj" data-p="burner"><p class="proj-h"><span class="tag">#5 Я Бернер</span><span class="proj-name">Burning Man под ключ</span></p><ul class="rows"><li>Проверяем, свободно ли имя yaberner в Instagram и Facebook. На YouTube и во ВКонтакте оно свободно.</li></ul></div>
+<div class="proj" data-p="common"><p class="proj-h"><span class="tag">Общее</span><span class="proj-name">Новые направления и общие дела</span></p><ul class="rows"><li><b>YouTube-канал про бизнес в Америке</b>: готовим варианты и предложения — как и что снимать.</li><li><b>Созвон втроём про маркетплейсы</b>: Вадим согласует время и предупредит тебя за день.</li><li><b>ИИ-агент в наших чатах</b>: первый тест пройден, идёт подготовка; Telegram ещё не подключён.</li></ul></div>
 </section>
 <section class="group g-ext" id="ext"><div class="group-h"><h2>Ждём ответа</h2><span class="cnt">4</span></div>
-<div class="proj"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li>Видео в русских группах Сакраменто: в «Славянском Сакраменто» (13,7 тыс. человек) пост вышел, в «Русском Сакраменто!» ждём публикации админов.</li><li>Надувная опалубка, круглая, 12 футов: запросили цену у Monolithic (Техас) на многоразовую оболочку, ты в копии письма, ждём ответа. Готовая такого размера есть у другого продавца, она одноразовая.</li><li>Рассылка ивент-агентствам: 7 октября ушла первая партия — 26 компаний из Сакраменто, Тахо и Рино, четыре адреса оказались нерабочими. Ждём ответы. Всего в списке 230 адресов.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li>Caltrans: следим за ответом. Письма ушли 11 и 22 сентября, ответа пока нет.</li></ul></div>
+<div class="proj" data-p="land"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li><b>Caltrans</b>: следим за ответом. Письма ушли 11 и 22 сентября, ответа пока нет.</li></ul></div>
+<div class="proj" data-p="exit168"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li><b>Видео в русских группах Сакраменто</b>: в «Славянском Сакраменто» (13,7 тыс. человек) пост вышел, в «Русском Сакраменто!» ждём публикации админов.</li><li><b>Надувная опалубка, круглая, 12 футов</b>: запросили цену у Monolithic (Техас) на многоразовую оболочку, ты в копии письма, ждём ответа. Готовая такого размера есть у другого продавца, она одноразовая.</li><li><b>Рассылка ивент-агентствам</b>: 7 октября ушла первая партия — 26 компаний из Сакраменто, Тахо и Рино, четыре адреса оказались нерабочими. Ждём ответы. Всего в списке 230 адресов.</li></ul></div>
 </section>
 <section class="group g-plan" id="plan"><div class="group-h"><h2>В планах</h2><span class="cnt">18</span></div>
-<div class="proj"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li>Бронь и оплата без человека, картой или Zelle: отложено. Сейчас календарь держит даты 24 часа, оплаты на сайте нет.</li><li>Американский голос для английских рилсов: выберем, когда будем делать следующий английский рилс. Сейчас голос британский.</li><li>Песня про баню, зажигательная: в планах, Вадим пишет её сам.</li><li>Вертикальный рилс из видео-презентации, 45–60 секунд: отложено.</li><li>Идея: раздел о хозяине на сайте перед ценами — фото и имя, чтобы гостям было спокойнее переводить залог. Только если ты согласен.</li><li>Клуб Exit 168 по подписке $100 в месяц: идея записана, в работу не брали.</li><li>Идея: забеги на участке — трейл 10 км и забег с препятствиями. Нужны разрешение округа, страховка и парковка; сезон без снега — с июня по октябрь.</li><li>Идея: приглашать в баню известных людей как гостей, не прося рекламы.</li><li>Идея: день открытых дверей в бане — мужской и женский день, бесплатно. Появятся отзывы и фото с людьми.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li>Выход на Tesla через брокера: в последнюю очередь, когда остальное отправлено.</li><li>Письменный ответ городского планировщика, что можно строить на участке. Почти всем арендаторам нужна поправка к плану района, это 12–24 месяца.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#3 Elijah RVs</span><span class="proj-name">Аренда домов на колёсах</span></p><ul class="rows"><li>Отдельный сайт проката RV для бёрнеров: идея, обсуждали 30 сентября.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#4 Книга</span><span class="proj-name">«Изгнанные из Рая»</span></p><ul class="rows"><li>Площадки для продажи книги, переводы и сайт: после готовой русской версии.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">#5 Я Бернер</span><span class="proj-name">Burning Man под ключ</span></p><ul class="rows"><li>Свои группы «Я Бернер» в Facebook, Instagram и Telegram: после того, как определим, что именно продаём.</li><li>Сайт «Я Бернер»: после того, как определим, что именно продаём.</li><li>Идея: YouTube-канал «Я Бернер» на русском. Нужен человек в кадре и свои съёмки.</li></ul></div>
-<div class="proj"><p class="proj-h"><span class="tag">Общее</span><span class="proj-name">Новые направления и общие дела</span></p><ul class="rows"><li>Идея из ролика, который ты присылал: записана в будущие планы.</li><li>Сайт учёта денег по всем бизнесам: бухгалтеры вносят расходы и доходы, ты видишь движение всех денег; у каждого свой доступ, личные кабинеты. Записано в план.</li></ul></div>
+<div class="proj" data-p="land"><p class="proj-h"><span class="tag">#1 14th Ave</span><span class="proj-name">Земля, 109 акров, Сакраменто</span></p><ul class="rows"><li><b>Выход на Tesla через брокера</b>: в последнюю очередь, когда остальное отправлено.</li><li>Письменный ответ городского планировщика, что можно строить на участке. Почти всем арендаторам нужна поправка к плану района, это 12–24 месяца.</li></ul></div>
+<div class="proj" data-p="exit168"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li><b>Бронь и оплата без человека, картой или Zelle</b>: отложено. Сейчас календарь держит даты 24 часа, оплаты на сайте нет.</li><li><b>Американский голос для английских рилсов</b>: выберем, когда будем делать следующий английский рилс. Сейчас голос британский.</li><li><b>Песня про баню, зажигательная</b>: в планах, Вадим пишет её сам.</li><li><b>Вертикальный рилс из видео-презентации, 45–60 секунд</b>: отложено.</li><li><b>Идея</b>: раздел о хозяине на сайте перед ценами — фото и имя, чтобы гостям было спокойнее переводить залог. Только если ты согласен.</li><li><b>Клуб Exit 168 по подписке $100 в месяц</b>: идея записана, в работу не брали.</li><li><b>Идея</b>: забеги на участке — трейл 10 км и забег с препятствиями. Нужны разрешение округа, страховка и парковка; сезон без снега — с июня по октябрь.</li><li><b>Идея</b>: приглашать в баню известных людей как гостей, не прося рекламы.</li><li><b>Идея</b>: день открытых дверей в бане — мужской и женский день, бесплатно. Появятся отзывы и фото с людьми.</li></ul></div>
+<div class="proj" data-p="rv"><p class="proj-h"><span class="tag">#3 Elijah RVs</span><span class="proj-name">Аренда домов на колёсах</span></p><ul class="rows"><li><b>Отдельный сайт проката RV для бёрнеров</b>: идея, обсуждали 30 сентября.</li></ul></div>
+<div class="proj" data-p="book"><p class="proj-h"><span class="tag">#4 Книга</span><span class="proj-name">«Изгнанные из Рая»</span></p><ul class="rows"><li><b>Площадки для продажи книги, переводы и сайт</b>: после готовой русской версии.</li></ul></div>
+<div class="proj" data-p="burner"><p class="proj-h"><span class="tag">#5 Я Бернер</span><span class="proj-name">Burning Man под ключ</span></p><ul class="rows"><li><b>Свои группы «Я Бернер» в Facebook, Instagram и Telegram</b>: после того, как определим, что именно продаём.</li><li><b>Сайт «Я Бернер»</b>: после того, как определим, что именно продаём.</li><li><b>Идея</b>: YouTube-канал «Я Бернер» на русском. Нужен человек в кадре и свои съёмки.</li></ul></div>
+<div class="proj" data-p="common"><p class="proj-h"><span class="tag">Общее</span><span class="proj-name">Новые направления и общие дела</span></p><ul class="rows"><li><b>Идея из ролика, который ты присылал</b>: записана в будущие планы.</li><li><b>Сайт учёта денег по всем бизнесам</b>: бухгалтеры вносят расходы и доходы, ты видишь движение всех денег; у каждого свой доступ, личные кабинеты. Записано в план.</li></ul></div>
 </section>
 <section class="group g-done" id="done"><div class="group-h"><h2>Сделано</h2><span class="cnt">11</span></div>
-<div class="proj"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li>Сайт: условие «от двух суток» теперь только на Новый год и День независимости — и в календаре брони тоже. <span class="when">8 октября</span></li><li>Сайт: телефон для клиентов стоит в верхней полосе, в блоке связи и внизу страницы. <span class="when">8 октября</span></li><li>Сайт: дополнен раздел про отдых на природе — ретриты, йога, пешие прогулки. <span class="when">8 октября</span></li><li>Сайт: внесены твои ответы — дети входят в 10 человек, часы дня и суток, душ и горячая вода, интернета нет, собаки только на улице. <span class="when">8 октября</span></li><li>Сайт: в заявке поле «Телефон с WhatsApp» стало обязательным. <span class="when">8 октября</span></li><li>Сайт: на узких телефонах английский заголовок больше не обрезается. <span class="when">8 октября</span></li><li>Сайт: карта открывается сразу крупным планом и переходит из лета в зиму по прокрутке; в разделе бани на экране один шаг вместо списка. <span class="when">8 октября</span></li><li>Сайт стал вдвое легче и открывается быстрее: 2,5 МБ вместо 5,2 на компьютере, 1,7 вместо 3,6 на телефоне. <span class="when">8 октября</span></li><li>Сайт подключён к Google Search Console; заявки с сайта считаются в Google Аналитике. <span class="when">7 октября</span></li><li>Гостье на 5 декабря Вадим ответил про детей и часы. <span class="when">7 октября</span></li><li>Рилс «Баню ставили раньше дома» опубликован на странице клуба и в группе «Калифорнийская баня». <span class="when">6 октября</span></li></ul></div>
+<div class="proj" data-p="exit168"><p class="proj-h"><span class="tag">#2 Exit 168</span><span class="proj-name">Лес с рекой, дом и баня</span></p><ul class="rows"><li><b>Сайт</b>: условие «от двух суток» теперь только на Новый год и День независимости — и в календаре брони тоже. <span class="when">8 октября</span></li><li><b>Сайт</b>: телефон для клиентов стоит в верхней полосе, в блоке связи и внизу страницы. <span class="when">8 октября</span></li><li><b>Сайт</b>: дополнен раздел про отдых на природе — ретриты, йога, пешие прогулки. <span class="when">8 октября</span></li><li><b>Сайт</b>: внесены твои ответы — дети входят в 10 человек, часы дня и суток, душ и горячая вода, интернета нет, собаки только на улице. <span class="when">8 октября</span></li><li><b>Сайт</b>: в заявке поле «Телефон с WhatsApp» стало обязательным. <span class="when">8 октября</span></li><li><b>Сайт</b>: на узких телефонах английский заголовок больше не обрезается. <span class="when">8 октября</span></li><li><b>Сайт</b>: карта открывается сразу крупным планом и переходит из лета в зиму по прокрутке; в разделе бани на экране один шаг вместо списка. <span class="when">8 октября</span></li><li><b>Сайт стал вдвое легче и открывается быстрее</b>: 2,5 МБ вместо 5,2 на компьютере, 1,7 вместо 3,6 на телефоне. <span class="when">8 октября</span></li><li>Сайт подключён к Google Search Console; заявки с сайта считаются в Google Аналитике. <span class="when">7 октября</span></li><li>Гостье на 5 декабря Вадим ответил про детей и часы. <span class="when">7 октября</span></li><li>Рилс «Баню ставили раньше дома» опубликован на странице клуба и в группе «Калифорнийская баня». <span class="when">6 октября</span></li></ul></div>
 </section>
+    <p class="empty" id="empty" hidden>По этому проекту здесь пусто.</p>
   </main>
 </div>
+<script>
+(function () {
+  function q(sel, el) { return [].slice.call((el || document).querySelectorAll(sel)); }
+  var tabs = q(".tab"), chips = q(".chip"), groups = q(".group"), empty = document.getElementById("empty");
+  if (!tabs.length) return;
+  var sec = groups[0].id, proj = "";
+
+  function show() {
+    groups.forEach(function (g, i) {  /* вкладки и разделы идут в одном порядке */
+      var n = 0;
+      q(".proj", g).forEach(function (p) {
+        p.hidden = !!proj && p.getAttribute("data-p") !== proj;
+        if (!p.hidden) n += q("li", p).length;
+      });
+      q(".n", tabs[i])[0].textContent = n;
+      q(".cnt", g)[0].textContent = n;
+      tabs[i].classList.toggle("is-zero", !n);
+      tabs[i].setAttribute("aria-current", g.id === sec ? "true" : "false");
+      g.hidden = g.id !== sec;
+      if (g.id === sec) empty.hidden = n > 0;
+    });
+    chips.forEach(function (c) {
+      c.setAttribute("aria-pressed", c.getAttribute("data-p") === proj ? "true" : "false");
+    });
+  }
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function (e) {
+      e.preventDefault();
+      sec = groups[i].id;
+      show();
+      window.scrollTo(0, 0);
+    });
+  });
+  chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      var p = c.getAttribute("data-p");
+      proj = p === proj ? "" : p;  /* второе нажатие снимает отбор */
+      show();
+      if (empty.hidden) return;
+      for (var i = 0; i < groups.length; i++) {  /* в открытом разделе по проекту пусто — открыть первый, где есть строки */
+        if (!tabs[i].classList.contains("is-zero")) { sec = groups[i].id; show(); break; }
+      }
+    });
+  });
+  document.getElementById("filter").hidden = false;
+  show();
+})();
+</script>
 </body>
 </html>
